@@ -17,10 +17,10 @@ class RtpPacket:
 		#--------------
 		# Fill the header bytearray with RTP header fields
 		
-		header[0] = (header[0] | version << 6) & 0xC0 # 2 bits
+		header[0] = (header[0] | version << 6) & 0xC0 # 2 bits 0xC0 = 1100 0000
 		header[0] = (header[0] | padding << 5) # 1 bit
 		header[0] = (header[0] | extension << 4) # 1 bit
-		header[0] = (header[0] | (cc & 0x0F)) # 4 bits
+		header[0] = (header[0] | (cc & 0x0F)) # 4 bits 0X0F = 1111 0000
 		header[1] = (header[1] | marker << 7) # 1 bit
 		header[1] = (header[1] | (pt & 0x7f)) # 7 bits
 		header[2] = (seqnum & 0xFF00) >> 8 # 16 bits total, this is first 8

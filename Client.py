@@ -2,7 +2,7 @@ from tkinter import *
 import tkinter.messagebox as tkMessageBox
 from PIL import Image, ImageTk
 import socket, threading, sys, traceback, os
-
+import time
 from RtpPacket import RtpPacket
 
 CACHE_FILE_NAME = "cache-"
@@ -34,6 +34,8 @@ class Client:
 		self.teardownAcked = 0
 		self.connectToServer()
 		self.frameNbr = 0
+		self.lostFrameCount = 0
+		self.dataTotal = 0
 		
 	def createWidgets(self):
 		"""Build GUI."""
@@ -92,17 +94,19 @@ class Client:
 	
 	def listenRtp(self):		
 		"""Listen for RTP packets."""
+		startTime = time.time()
 		while True:
 			try:
 				data = self.rtpSocket.recv(20480)
+				self.dataTotal += len(data)
 				if data:
 					rtpPacket = RtpPacket()
 					rtpPacket.decode(data)
-					
 					currFrameNbr = rtpPacket.seqNum()
-					print("Current Seq Num: " + str(currFrameNbr))
+					print("Current Seq Num: " + str(currFrameNbr) + " Lost Frame: " + str(self.lostFrameCount))
 										
 					if currFrameNbr > self.frameNbr: # Discard the late packet
+						self.lostFrameCount += currFrameNbr - (self.frameNbr + 1)
 						self.frameNbr = currFrameNbr
 						self.updateMovie(self.writeFrame(rtpPacket.getPayload()))
 			except:
@@ -116,7 +120,10 @@ class Client:
 					self.rtpSocket.shutdown(socket.SHUT_RDWR)
 					self.rtpSocket.close()
 					break
-					
+		
+		print("RTP Packet Loss Rate : " + str(int(float(self.lostFrameCount / self.frameNbr)*100)) + "%")
+		endTime = time.time()
+		print("Video Data Rate: " + str(int(self.dataTotal / (endTime - startTime))) + " bytes/second")
 	def writeFrame(self, data):
 		"""Write the received frame to a temp image file. Return the image file."""
 		cachename = CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT
