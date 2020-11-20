@@ -36,6 +36,7 @@ class Client:
 		self.frameNbr = 0
 		self.lostFrameCount = 0
 		self.dataTotal = 0
+		self.sendRtspRequest(self.SETUP)
 		
 	def createWidgets(self):
 		"""Build GUI."""
